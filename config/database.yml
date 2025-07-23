@@ -1,0 +1,20 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  username: postgres
+  password: captech@123
+  host: localhost
+  port: 5432
+
+
+development:
+  <<: *default
+  database: user_api_development
+
+test:
+  <<: *default
+  database: user_api_development
+
+production:
+  <<: *default
+  database: user_api_development

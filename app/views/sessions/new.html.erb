@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  
+  <!-- Toastify CSS -->
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+  <%= csrf_meta_tags %>
+</head>
+<body>
+  <div class="container mt-5" style="max-width: 400px;">
+    <h2 class="mb-4">Login</h2>
+
+    <form id="loginForm" method="POST">
+      <div class="mb-3">
+        <label for="email" class="form-label">Email address</label>
+        <input type="email" class="form-control" id="email" name="email" required placeholder="Enter email" />
+      </div>
+
+      <div class="mb-3 position-relative">
+        <label for="password" class="form-label">Password</label>
+        <input type="password" id="password" class="form-control" placeholder="Enter password" required>
+        <i class="bi bi-eye-slash position-absolute toggle-password"
+        data-target="password"
+        style="top: 38px; right: 15px; cursor: pointer;"></i>
+      </div>
+
+      <button type="submit" class="btn btn-primary w-100">Login</button>
+      <div class="text-center mt-4">
+      <p>Don't have an account? <a href="/signup" class="text-primary fw-bold text-decoration-none">Sign up</a></p>
+      </div>
+    </form>
+  </div>
+
+  <!-- Bootstrap Bundle JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Toastify JS -->
+  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+  <!-- Script with Toastify -->
+  <script>
+    function showToast(message, type = "success") {
+      Toastify({
+        text: message,
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        backgroundColor: type === "success" ? "#198754" : "#dc3545",
+        close: true
+      }).showToast();
+    }
+    
+    document.addEventListener('DOMContentLoaded', () => {
+    const userId = localStorage.getItem('user_id');
+
+    // If user_id exists, user is already logged in
+    if (userId) {
+      // Redirect to dashboard
+      window.location.href = '/books';
+    }
+  });
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      try {
+        const response = await fetch('/api/sessions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+          credentials: 'same-origin'
+        });
+
+        const data = await response.json();
+        console.log("data:",data);
+
+        if (response.ok) {
+          localStorage.setItem('user_id', data.user.id);
+          console.log("User ID:", data.user.id);
+
+          showToast('Login successful!', 'success');
+            document.getElementById('loginForm').reset();
+          setTimeout(() => {
+            window.location.href = '/books';
+          }, 1500);
+        } else {
+          showToast(data.error || 'Login failed', 'error');
+        }
+      } catch (error) {
+        showToast('Error during login. Please try again.', 'error');
+        console.error(error);
+      }
+    });
+
+     document.addEventListener("DOMContentLoaded", () => {
+      const emailInput = document.getElementById("email");
+
+      emailInput.addEventListener("input", () => {
+      emailInput.value = emailInput.value.toLowerCase();
+      });
+    });
+
+      // Toggle password visibility
+  document.querySelectorAll('.toggle-password').forEach(icon => {
+    icon.addEventListener('click', function () {
+      const targetId = this.getAttribute('data-target');
+      const input = document.getElementById(targetId);
+
+      if (input.type === 'password') {
+        input.type = 'text';
+        this.classList.remove('bi-eye-slash');
+        this.classList.add('bi-eye');
+      } else {
+        input.type = 'password';
+        this.classList.remove('bi-eye');
+        this.classList.add('bi-eye-slash');
+      }
+    });
+  });
+  </script>
+</body>
+</html>

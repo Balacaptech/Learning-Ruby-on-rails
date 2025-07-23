@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Edit Book</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" />
+</head>
+<body>
+  <div class="container mt-5">
+    <h2>Edit Book</h2>
+    <form id="editForm" enctype="multipart/form-data">
+      <div class="mb-3">
+        <label class="form-label">Title</label>
+        <input type="text" id="title" class="form-control" required />
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Author</label>
+        <input type="text" id="author" class="form-control" required />
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Description</label>
+        <textarea id="description" class="form-control"></textarea>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Price</label>
+        <input type="number" id="price" class="form-control" step="0.01" />
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Current File</label><br />
+        <img id="currentFile" src="" alt="No file" style="max-width: 120px; display: none;" class="img-thumbnail mt-2" />
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Change File</label>
+        <input type="file" id="file" class="form-control" />
+      </div>
+      <button type="submit" class="btn btn-primary">Update Book</button>
+    </form>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+  <script>
+    const userId = localStorage.getItem('user_id');
+    const params = new URLSearchParams(window.location.search);
+    const bookId = params.get('id');
+    const apiBase = `/api/users/${userId}/books`;
+
+    function showToast(message, type = 'success') {
+      Toastify({
+        text: message,
+        duration: 3000,
+        gravity: 'top',
+        position: 'right',
+        backgroundColor: type === 'success' ? "#198754" : "#dc3545",
+        close: true
+      }).showToast();
+    }
+
+    if (!userId || !bookId) {
+      alert("User ID or Book ID missing.");
+      window.location.href = "/login.html";
+    }
+
+    async function loadBook() {
+      try {
+        const response = await fetch(`${apiBase}/${bookId}`);
+        if (!response.ok) {
+          showToast("Book not found.", "error");
+          return;
+        }
+        const book = await response.json();
+        document.getElementById('title').value = book.title || '';
+        document.getElementById('author').value = book.author || '';
+        document.getElementById('description').value = book.description || '';
+        document.getElementById('price').value = book.price || '';
+
+        if (book.file_url) {
+          const img = document.getElementById('currentFile');
+          img.src = book.file_url;
+          img.style.display = 'block';
+        }
+      } catch (err) {
+        showToast("Failed to load book: " + err.message, "error");
+      }
+    }
+
+    document.getElementById('editForm').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const formData = new FormData();
+      formData.append('title', document.getElementById('title').value);
+      formData.append('author', document.getElementById('author').value);
+      formData.append('description', document.getElementById('description').value);
+      formData.append('price', document.getElementById('price').value);
+
+      const fileInput = document.getElementById('file');
+      if (fileInput.files.length > 0) {
+        formData.append('file', fileInput.files[0]);
+      }
+
+      try {
+        const response = await fetch(`${apiBase}/${bookId}`, {
+          method: 'PATCH',
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (response.ok && (result.status === 'success' || result.updated)) {
+          showToast("Book updated successfully!");
+          setTimeout(() => window.location.href = '/all_books.html', 1500);
+        } else {
+          showToast("Update failed: " + (result.errors || JSON.stringify(result)), "error");
+        }
+      } catch (err) {
+        showToast("Error updating book: " + err.message, "error");
+      }
+    });
+
+    loadBook();
+  </script>
+</body>
+</html>

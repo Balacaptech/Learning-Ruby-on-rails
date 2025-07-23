@@ -1,0 +1,2 @@
+module CarsUiHelper
+end
