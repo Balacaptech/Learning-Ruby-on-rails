@@ -138,6 +138,8 @@ module Api
       params.permit(:title, :author, :description, :price, :file)
     end
 
+    # test
+
     def set_user
       @user = User.find_by(id: params[:user_id])
       unless @user
